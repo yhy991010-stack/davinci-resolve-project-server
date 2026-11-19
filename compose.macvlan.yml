@@ -1,0 +1,36 @@
+# 方式 B：宿主机 5432 已被系统占用（例如绿联 UGOS 自带数据库）时使用
+# 给容器一个独立的局域网 IP，在这个地址上独占 5432。
+# 用法：docker compose --env-file .env -f compose.macvlan.yml up -d
+
+services:
+  davinci-db:
+    image: postgres:13
+    container_name: davinci-db
+    restart: unless-stopped
+    shm_size: 256mb
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+      PGTZ: ${TZ:-Asia/Shanghai}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - ${DATA_DIR:-./data}:/var/lib/postgresql/data
+    networks:
+      lan:
+        ipv4_address: ${DB_IP}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+networks:
+  lan:
+    driver: macvlan
+    driver_opts:
+      parent: ${LAN_PARENT}
+    ipam:
+      config:
+        - subnet: ${LAN_SUBNET}
+          gateway: ${LAN_GATEWAY}

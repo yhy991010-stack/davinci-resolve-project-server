@@ -1,0 +1,6 @@
+.env
+data/
+*.dump
+*.sql
+.pg_pass
+.DS_Store

@@ -1,0 +1,25 @@
+# 方式 C：在方式 B 之上，解决 macvlan 地址经 Tailscale 子网路由进不去的问题
+# 用法：
+#   docker compose --env-file .env -f compose.macvlan.yml up -d
+#   docker compose --env-file .env -f compose.shim.yml up -d
+#
+# 转发容器使用 host 网络，在 SHIM_IP（以及可选的 TAILSCALE_IP）上监听 5432，
+# 再转到 DB_IP:5432。达芬奇客户端请填 SHIM_IP 或 Tailscale 地址，不要填 DB_IP。
+
+services:
+  davinci-host-shim:
+    build: ./shim
+    image: davinci-host-shim:local
+    container_name: davinci-host-shim
+    restart: unless-stopped
+    network_mode: host
+    privileged: true
+    cap_add:
+      - NET_ADMIN
+    environment:
+      LAN_PARENT: ${LAN_PARENT}
+      LAN_SUBNET: ${LAN_SUBNET}
+      DB_IP: ${DB_IP}
+      SHIM_IP: ${SHIM_IP}
+      TAILSCALE_IP: ${TAILSCALE_IP:-}
+      APPLY_NAT_EXEMPT: "1"

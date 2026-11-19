@@ -1,0 +1,24 @@
+# 方式 A：宿主机 5432 端口空闲时使用
+# 用法：docker compose --env-file .env -f compose.simple.yml up -d
+
+services:
+  davinci-db:
+    image: postgres:13
+    container_name: davinci-db
+    restart: unless-stopped
+    shm_size: 256mb
+    ports:
+      - "5432:5432"
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+      PGTZ: ${TZ:-Asia/Shanghai}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - ${DATA_DIR:-./data}:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
